@@ -248,3 +248,83 @@ def test_crossover_rejects_invalid_cut_points():
             [0, 3, 4, 1, 2],
             cut_points=(2, 1),
         )
+
+
+from src.genetic_algorithm import swap_mutation, select_elites
+
+
+def test_mutation_preserves_valid_chromosome():
+    chromosome = [0, 1, 2, 3, 4]
+
+    mutated = swap_mutation(
+        chromosome, mutation_rate=1.0, seed=42
+    )
+
+    assert validate_chromosome(mutated, 5)
+
+
+def test_mutation_keeps_starting_city_fixed():
+    chromosome = [0, 1, 2, 3, 4]
+
+    mutated = swap_mutation(
+        chromosome, mutation_rate=1.0, seed=42
+    )
+
+    assert mutated[0] == 0
+
+
+def test_mutation_does_not_modify_original():
+    chromosome = [0, 1, 2, 3, 4]
+    original = chromosome.copy()
+
+    swap_mutation(chromosome, mutation_rate=1.0, seed=42)
+
+    assert chromosome == original
+
+
+def test_zero_mutation_rate_preserves_route():
+    chromosome = [0, 1, 2, 3, 4]
+
+    mutated = swap_mutation(
+        chromosome, mutation_rate=0.0, seed=42
+    )
+
+    assert mutated == chromosome
+
+
+def test_mutation_is_reproducible():
+    chromosome = [0, 1, 2, 3, 4]
+
+    first = swap_mutation(chromosome, 1.0, seed=42)
+    second = swap_mutation(chromosome, 1.0, seed=42)
+
+    assert first == second
+
+
+def test_invalid_mutation_rate_rejected():
+    with pytest.raises(ValueError):
+        swap_mutation([0, 1, 2], mutation_rate=1.5)
+
+
+def test_elites_are_sorted_by_distance():
+    cities = [(0, 0), (2, 4), (5, 2), (6, 6), (8, 3)]
+    matrix = build_distance_matrix(cities)
+    population = initialize_population(5, 10, seed=42)
+
+    elites = select_elites(population, matrix, elite_count=3)
+    distances = [evaluate_fitness(route, matrix) for route in elites]
+
+    assert distances == sorted(distances)
+
+
+def test_elites_are_copies_of_population_routes():
+    cities = [(0, 0), (2, 4), (5, 2), (6, 6), (8, 3)]
+    matrix = build_distance_matrix(cities)
+    population = initialize_population(5, 10, seed=42)
+
+    elites = select_elites(population, matrix, elite_count=1)
+
+    assert elites[0] in population
+    assert elites[0] is not next(
+        route for route in population if route == elites[0]
+    )

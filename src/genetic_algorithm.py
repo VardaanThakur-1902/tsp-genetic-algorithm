@@ -216,3 +216,76 @@ def ordered_crossover(
     child2 = make_child(parent2, parent1)
 
     return child1, child2
+
+
+def swap_mutation(
+    chromosome: Chromosome,
+    mutation_rate: float = 0.1,
+    seed: int | None = None,
+) -> Chromosome:
+    """
+    With the given probability, swap two cities in a chromosome.
+
+    City 0 remains fixed. The original chromosome is not modified.
+    """
+    if not chromosome:
+        raise ValueError("Chromosome cannot be empty.")
+
+    if not validate_chromosome(chromosome, len(chromosome)):
+        raise ValueError("Invalid chromosome.")
+
+    if not 0.0 <= mutation_rate <= 1.0:
+        raise ValueError("Mutation rate must be between 0 and 1.")
+
+    mutated = chromosome.copy()
+    rng = random.Random(seed)
+
+    # No mutation is possible with fewer than two movable cities.
+    if len(mutated) < 3:
+        return mutated
+
+    if rng.random() < mutation_rate:
+        pos1, pos2 = rng.sample(range(1, len(mutated)), 2)
+        mutated[pos1], mutated[pos2] = (
+            mutated[pos2],
+            mutated[pos1],
+        )
+
+    return mutated
+
+
+def select_elites(
+    population: list[Chromosome],
+    distance_matrix: Sequence[Sequence[float]],
+    elite_count: int = 1,
+) -> list[Chromosome]:
+    """
+    Return copies of the best chromosomes, ordered by distance.
+
+    These chromosomes can be copied unchanged into the next generation.
+    """
+    if not population:
+        raise ValueError("Population cannot be empty.")
+
+    if not 1 <= elite_count <= len(population):
+        raise ValueError(
+            "Elite count must be between 1 and population size."
+        )
+
+    number_of_cities = len(distance_matrix)
+
+    for chromosome in population:
+        if not validate_chromosome(chromosome, number_of_cities):
+            raise ValueError("Population contains an invalid chromosome.")
+
+    ranked_population = sorted(
+        population,
+        key=lambda chromosome: evaluate_fitness(
+            chromosome, distance_matrix
+        ),
+    )
+
+    return [
+        chromosome.copy()
+        for chromosome in ranked_population[:elite_count]
+    ]

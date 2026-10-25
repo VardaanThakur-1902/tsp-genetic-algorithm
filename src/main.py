@@ -1,39 +1,66 @@
 
+from src.distance import build_distance_matrix
 from src.genetic_algorithm import (
-    ordered_crossover,
-    validate_chromosome,
+    evaluate_fitness,
+    initialize_population,
+    select_elites,
+    swap_mutation,
 )
 
 
 def main():
-    parent1 = [0, 1, 2, 3, 4]
-    parent2 = [0, 3, 4, 1, 2]
+    cities = [
+        (0, 0),  # A
+        (2, 4),  # B
+        (5, 2),  # C
+        (6, 6),  # D
+        (8, 3),  # E
+    ]
 
     names = ["A", "B", "C", "D", "E"]
+    matrix = build_distance_matrix(cities)
 
-    child1, child2 = ordered_crossover(
-        parent1,
-        parent2,
-        seed=42,
+    population = initialize_population(
+        len(cities), population_size=10, seed=42
     )
 
-    def display_route(route):
-        names_in_route = [names[city] for city in route]
-        names_in_route.append(names_in_route[0])
-        return " -> ".join(names_in_route)
+    best_route = select_elites(
+        population, matrix, elite_count=1
+    )[0]
+
+    mutated_route = swap_mutation(
+        best_route, mutation_rate=1.0, seed=42
+    )
+
+    elites = select_elites(
+        population, matrix, elite_count=3
+    )
+
+    def show_route(route):
+        route_names = [names[city] for city in route]
+        route_names.append(route_names[0])
+        return " -> ".join(route_names)
 
     print("=" * 45)
-    print("PHASE 5: ORDERED CROSSOVER")
+    print("PHASE 6: MUTATION AND ELITISM")
     print("=" * 45)
 
-    print("\nParent 1:", display_route(parent1))
-    print("Parent 2:", display_route(parent2))
+    print("\nBest original route:")
+    print(show_route(best_route))
+    print(f"Distance: {evaluate_fitness(best_route, matrix):.3f}")
 
-    print("\nChild 1:", display_route(child1))
-    print("Child 1 valid:", validate_chromosome(child1, 5))
+    print("\nAfter swap mutation:")
+    print(show_route(mutated_route))
+    print(f"Distance: {evaluate_fitness(mutated_route, matrix):.3f}")
 
-    print("\nChild 2:", display_route(child2))
-    print("Child 2 valid:", validate_chromosome(child2, 5))
+    print("\nTop 3 elite routes:")
+    for index, route in enumerate(elites, start=1):
+        print(
+            f"{index}. {show_route(route)} | "
+            f"Distance: {evaluate_fitness(route, matrix):.3f}"
+        )
+
+    print("\nOriginal best route preserved:", best_route in population)
 
 
 if __name__ == "__main__":
