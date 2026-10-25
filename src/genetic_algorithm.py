@@ -75,3 +75,57 @@ def initialize_population(
         population.append(create_chromosome(number_of_cities, rng))
 
     return population
+
+
+from collections.abc import Sequence
+
+
+def evaluate_fitness(
+    chromosome: Chromosome,
+    distance_matrix: Sequence[Sequence[float]],
+) -> float:
+    """Return the total route distance; lower is better."""
+    number_of_cities = len(distance_matrix)
+
+    if not validate_chromosome(chromosome, number_of_cities):
+        raise ValueError("Invalid chromosome.")
+
+    total_distance = 0.0
+
+    for i in range(len(chromosome)):
+        current_city = chromosome[i]
+        next_city = chromosome[(i + 1) % len(chromosome)]
+
+        total_distance += distance_matrix[current_city][next_city]
+
+    return total_distance
+
+
+def tournament_selection(
+    population: list[Chromosome],
+    distance_matrix: Sequence[Sequence[float]],
+    tournament_size: int = 3,
+    seed: int | None = None,
+) -> Chromosome:
+    """Select the shortest-distance chromosome from a random tournament."""
+    if not population:
+        raise ValueError("Population cannot be empty.")
+
+    if tournament_size < 1 or tournament_size > len(population):
+        raise ValueError(
+            "Tournament size must be between 1 and population size."
+        )
+
+    rng = random.Random(seed)
+
+    contestants = rng.sample(population, tournament_size)
+
+    winner = min(
+        contestants,
+        key=lambda chromosome: evaluate_fitness(
+            chromosome, distance_matrix
+        ),
+    )
+
+    # Return a copy so later operators cannot modify the population.
+    return winner.copy()
