@@ -157,3 +157,94 @@ def test_invalid_tournament_size_rejected():
 
     with pytest.raises(ValueError):
         tournament_selection(population, matrix, tournament_size=0)
+
+
+from src.genetic_algorithm import ordered_crossover
+
+
+def test_crossover_children_are_valid():
+    parent1 = [0, 1, 2, 3, 4]
+    parent2 = [0, 3, 4, 1, 2]
+
+    child1, child2 = ordered_crossover(
+        parent1, parent2, seed=42
+    )
+
+    assert validate_chromosome(child1, 5)
+    assert validate_chromosome(child2, 5)
+
+
+def test_crossover_preserves_starting_city():
+    parent1 = [0, 1, 2, 3, 4]
+    parent2 = [0, 4, 3, 2, 1]
+
+    child1, child2 = ordered_crossover(
+        parent1, parent2, seed=42
+    )
+
+    assert child1[0] == 0
+    assert child2[0] == 0
+
+
+def test_crossover_preserves_parent_segment():
+    parent1 = [0, 1, 2, 3, 4]
+    parent2 = [0, 3, 4, 1, 2]
+
+    child1, _ = ordered_crossover(
+        parent1, parent2, cut_points=(1, 2)
+    )
+
+    # Tail of parent1 is [1, 2, 3, 4].
+    # Positions 1 and 2 contain [2, 3].
+    assert child1[2:4] == [2, 3]
+
+
+def test_crossover_is_reproducible():
+    parent1 = [0, 1, 2, 3, 4]
+    parent2 = [0, 3, 4, 1, 2]
+
+    first = ordered_crossover(parent1, parent2, seed=123)
+    second = ordered_crossover(parent1, parent2, seed=123)
+
+    assert first == second
+
+
+def test_crossover_does_not_modify_parents():
+    parent1 = [0, 1, 2, 3, 4]
+    parent2 = [0, 3, 4, 1, 2]
+
+    original1 = parent1.copy()
+    original2 = parent2.copy()
+
+    ordered_crossover(parent1, parent2, seed=42)
+
+    assert parent1 == original1
+    assert parent2 == original2
+
+
+def test_crossover_with_two_cities():
+    parent1 = [0, 1]
+    parent2 = [0, 1]
+
+    child1, child2 = ordered_crossover(parent1, parent2, seed=42)
+
+    assert child1 == parent1
+    assert child2 == parent2
+
+
+def test_crossover_rejects_invalid_parent():
+    with pytest.raises(ValueError):
+        ordered_crossover(
+            [0, 1, 1, 3],
+            [0, 1, 2, 3],
+            seed=42,
+        )
+
+
+def test_crossover_rejects_invalid_cut_points():
+    with pytest.raises(ValueError):
+        ordered_crossover(
+            [0, 1, 2, 3, 4],
+            [0, 3, 4, 1, 2],
+            cut_points=(2, 1),
+        )

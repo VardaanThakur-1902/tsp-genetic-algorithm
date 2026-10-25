@@ -129,3 +129,90 @@ def tournament_selection(
 
     # Return a copy so later operators cannot modify the population.
     return winner.copy()
+
+
+def ordered_crossover(
+    parent1: Chromosome,
+    parent2: Chromosome,
+    seed: int | None = None,
+    cut_points: tuple[int, int] | None = None,
+) -> tuple[Chromosome, Chromosome]:
+    """
+    Perform Ordered Crossover (OX) on two TSP chromosomes.
+
+    City 0 remains fixed at the start.
+    Cut points are inclusive positions within the remaining
+    city sequence (excluding city 0).
+    """
+    n = len(parent1)
+
+    if n != len(parent2):
+        raise ValueError("Parents must have the same length.")
+
+    if not validate_chromosome(parent1, n):
+        raise ValueError("Parent 1 is invalid.")
+
+    if not validate_chromosome(parent2, n):
+        raise ValueError("Parent 2 is invalid.")
+
+    # With fewer than two movable cities, crossover has no effect.
+    tail_length = n - 1
+
+    if tail_length < 2:
+        return parent1.copy(), parent2.copy()
+
+    rng = random.Random(seed)
+
+    if cut_points is None:
+        left, right = sorted(rng.sample(range(tail_length), 2))
+    else:
+        left, right = cut_points
+
+        if not (0 <= left < right < tail_length):
+            raise ValueError(
+                "Cut points must satisfy 0 <= left < right < "
+                "number of movable cities."
+            )
+
+    def make_child(
+        segment_parent: Chromosome,
+        order_parent: Chromosome,
+    ) -> Chromosome:
+        segment = segment_parent[1:]
+        order = order_parent[1:]
+
+        child = [None] * tail_length
+
+        # Copy the selected segment from the first parent.
+        child[left:right + 1] = segment[left:right + 1]
+
+        used = set(child[left:right + 1])
+
+        # Visit positions cyclically, beginning after the right cut.
+        positions = [
+            (right + 1 + offset) % tail_length
+            for offset in range(tail_length)
+        ]
+
+        # Read the second parent's sequence in the same cyclic order.
+        ordered_cities = [
+            order[(right + 1 + offset) % tail_length]
+            for offset in range(tail_length)
+        ]
+
+        available_cities = [
+            city for city in ordered_cities if city not in used
+        ]
+
+        for position, city in zip(
+            [p for p in positions if child[p] is None],
+            available_cities,
+        ):
+            child[position] = city
+
+        return [0] + child
+
+    child1 = make_child(parent1, parent2)
+    child2 = make_child(parent2, parent1)
+
+    return child1, child2
