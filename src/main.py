@@ -1,6 +1,12 @@
 
-from src.distance import build_distance_matrix
-from src.baseline_solver import solve_baseline
+from src.genetic_algorithm import (
+    initialize_population,
+    validate_chromosome,
+)
+from src.distance import (
+    build_distance_matrix,
+    calculate_route_distance,
+)
 
 
 def main():
@@ -13,43 +19,36 @@ def main():
     ]
 
     city_names = ["A", "B", "C", "D", "E"]
+    population_size = 10
 
-    trials = 1000
-
-    best_route, best_distance = solve_baseline(
-        cities,
-        trials=trials,
+    population = initialize_population(
+        number_of_cities=len(cities),
+        population_size=population_size,
         seed=42,
     )
 
-    route_names = [city_names[i] for i in best_route]
-    route_names.append(route_names[0])
+    distance_matrix = build_distance_matrix(cities)
 
     print("=" * 45)
-    print("BASELINE TSP SOLVER")
+    print("GENETIC ALGORITHM - INITIAL POPULATION")
     print("=" * 45)
     print(f"Number of cities: {len(cities)}")
-    print(f"Random trials: {trials}")
-    print("Algorithm: Random Search")
-    print("Best route:", " -> ".join(route_names))
-    print(f"Best distance: {best_distance:.3f}")
+    print(f"Population size: {len(population)}")
 
-    # Show the distances between consecutive cities.
-    matrix = build_distance_matrix(cities)
-
-    print("\nRoute breakdown:")
-    for i in range(len(best_route)):
-        current_city = best_route[i]
-        next_city = best_route[(i + 1) % len(best_route)]
-
-        distance = matrix[current_city][next_city]
-
-        print(
-            f"{city_names[current_city]} -> "
-            f"{city_names[next_city]}: {distance:.3f}"
+    for i, chromosome in enumerate(population, start=1):
+        distance = calculate_route_distance(
+            chromosome, distance_matrix
         )
 
-    print(f"\nTotal distance: {best_distance:.3f}")
+        route_names = [city_names[c] for c in chromosome]
+        route_names.append(route_names[0])
+
+        valid = validate_chromosome(chromosome, len(cities))
+
+        print(f"\nChromosome {i}:")
+        print("Route:", " -> ".join(route_names))
+        print(f"Distance: {distance:.3f}")
+        print(f"Valid: {valid}")
 
 
 if __name__ == "__main__":
