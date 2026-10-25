@@ -1,13 +1,9 @@
 
-from src.distance import (
-    build_distance_matrix,
-    calculate_distance,
-    calculate_route_distance,
-)
+from src.distance import build_distance_matrix
+from src.baseline_solver import solve_baseline
 
 
 def main():
-    # Coordinates for five cities: A, B, C, D, E
     cities = [
         (0, 0),  # A
         (2, 4),  # B
@@ -18,29 +14,42 @@ def main():
 
     city_names = ["A", "B", "C", "D", "E"]
 
-    # Calculate distance between two cities
-    distance_ab = calculate_distance(cities[0], cities[1])
-    print(f"Distance A to B: {distance_ab:.3f}")
+    trials = 1000
 
-    # Create distance matrix
-    matrix = build_distance_matrix(cities)
+    best_route, best_distance = solve_baseline(
+        cities,
+        trials=trials,
+        seed=42,
+    )
 
-    print("\nDistance Matrix:")
-    print("    " + "  ".join(city_names))
-
-    for i, row in enumerate(matrix):
-        formatted_row = "  ".join(f"{d:6.2f}" for d in row)
-        print(f"{city_names[i]}  {formatted_row}")
-
-    # Test one possible route
-    route = [0, 1, 2, 3, 4]
-    total = calculate_route_distance(route, matrix)
-
-    route_names = [city_names[i] for i in route]
+    route_names = [city_names[i] for i in best_route]
     route_names.append(route_names[0])
 
-    print("\nExample route:", " -> ".join(route_names))
-    print(f"Total route distance: {total:.3f}")
+    print("=" * 45)
+    print("BASELINE TSP SOLVER")
+    print("=" * 45)
+    print(f"Number of cities: {len(cities)}")
+    print(f"Random trials: {trials}")
+    print("Algorithm: Random Search")
+    print("Best route:", " -> ".join(route_names))
+    print(f"Best distance: {best_distance:.3f}")
+
+    # Show the distances between consecutive cities.
+    matrix = build_distance_matrix(cities)
+
+    print("\nRoute breakdown:")
+    for i in range(len(best_route)):
+        current_city = best_route[i]
+        next_city = best_route[(i + 1) % len(best_route)]
+
+        distance = matrix[current_city][next_city]
+
+        print(
+            f"{city_names[current_city]} -> "
+            f"{city_names[next_city]}: {distance:.3f}"
+        )
+
+    print(f"\nTotal distance: {best_distance:.3f}")
 
 
 if __name__ == "__main__":
