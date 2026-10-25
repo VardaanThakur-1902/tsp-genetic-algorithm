@@ -1,11 +1,9 @@
 
-from src.distance import build_distance_matrix
 from src.genetic_algorithm import (
-    evaluate_fitness,
-    initialize_population,
-    select_elites,
-    swap_mutation,
+    run_genetic_algorithm,
+    validate_chromosome,
 )
+from src.baseline_solver import solve_baseline
 
 
 def main():
@@ -18,49 +16,65 @@ def main():
     ]
 
     names = ["A", "B", "C", "D", "E"]
-    matrix = build_distance_matrix(cities)
 
-    population = initialize_population(
-        len(cities), population_size=10, seed=42
+    population_size = 50
+    generations = 100
+
+    print("=" * 50)
+    print("TRAVELLING SALESPERSON PROBLEM SOLVER")
+    print("GENETIC ALGORITHM")
+    print("=" * 50)
+
+    best_route, best_distance, history = run_genetic_algorithm(
+        cities,
+        population_size=population_size,
+        generations=generations,
+        crossover_rate=0.9,
+        mutation_rate=0.1,
+        tournament_size=3,
+        elite_count=1,
+        seed=42,
     )
 
-    best_route = select_elites(
-        population, matrix, elite_count=1
-    )[0]
+    route_names = [names[city] for city in best_route]
+    route_names.append(route_names[0])
 
-    mutated_route = swap_mutation(
-        best_route, mutation_rate=1.0, seed=42
-    )
+    print(f"\nCities: {len(cities)}")
+    print(f"Population size: {population_size}")
+    print(f"Generations: {generations}")
+    print("Algorithm: Genetic Algorithm")
 
-    elites = select_elites(
-        population, matrix, elite_count=3
-    )
+    print("\nBest route found:")
+    print(" -> ".join(route_names))
+    print(f"Best distance: {best_distance:.3f}")
+    print("Route valid:", validate_chromosome(best_route, len(cities)))
 
-    def show_route(route):
-        route_names = [names[city] for city in route]
-        route_names.append(route_names[0])
-        return " -> ".join(route_names)
+    print("\nConvergence:")
+    print(f"Initial best distance: {history[0]:.3f}")
+    print(f"Final best distance:   {history[-1]:.3f}")
 
-    print("=" * 45)
-    print("PHASE 6: MUTATION AND ELITISM")
-    print("=" * 45)
-
-    print("\nBest original route:")
-    print(show_route(best_route))
-    print(f"Distance: {evaluate_fitness(best_route, matrix):.3f}")
-
-    print("\nAfter swap mutation:")
-    print(show_route(mutated_route))
-    print(f"Distance: {evaluate_fitness(mutated_route, matrix):.3f}")
-
-    print("\nTop 3 elite routes:")
-    for index, route in enumerate(elites, start=1):
+    print("\nBest-so-far distance every 10 generations:")
+    for generation in range(0, generations + 1, 10):
         print(
-            f"{index}. {show_route(route)} | "
-            f"Distance: {evaluate_fitness(route, matrix):.3f}"
+            f"Generation {generation:3}: "
+            f"{history[generation]:.3f}"
         )
 
-    print("\nOriginal best route preserved:", best_route in population)
+    # Compare with the random-search baseline.
+    baseline_route, baseline_distance = solve_baseline(
+        cities, trials=1000, seed=42
+    )
+
+    print("\nBaseline comparison:")
+    print(f"Random search distance: {baseline_distance:.3f}")
+    print(f"Genetic Algorithm:      {best_distance:.3f}")
+
+    if best_distance < baseline_distance:
+        print("GA found a shorter route in this experiment.")
+    elif best_distance == baseline_distance:
+        print("Both methods found routes with equal distance.")
+    else:
+        print("Random search found a shorter route in this experiment.")
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ from src.genetic_algorithm import (
     create_chromosome,
     initialize_population,
     validate_chromosome,
+    run_genetic_algorithm,
 )
 import random
 
@@ -328,3 +329,85 @@ def test_elites_are_copies_of_population_routes():
     assert elites[0] is not next(
         route for route in population if route == elites[0]
     )
+
+
+def test_ga_returns_valid_route():
+    cities = [(0, 0), (2, 4), (5, 2), (6, 6), (8, 3)]
+
+    route, distance, history = run_genetic_algorithm(
+        cities, population_size=10, generations=20, seed=42
+    )
+
+    assert validate_chromosome(route, len(cities))
+    assert distance > 0
+    assert len(history) == 21
+
+
+def test_ga_is_reproducible():
+    cities = [(0, 0), (2, 4), (5, 2), (6, 6), (8, 3)]
+
+    result1 = run_genetic_algorithm(
+        cities, population_size=10, generations=20, seed=42
+    )
+    result2 = run_genetic_algorithm(
+        cities, population_size=10, generations=20, seed=42
+    )
+
+    assert result1 == result2
+
+
+def test_best_distance_never_increases():
+    cities = [(0, 0), (2, 4), (5, 2), (6, 6), (8, 3)]
+
+    _, _, history = run_genetic_algorithm(
+        cities, population_size=10, generations=30, seed=42
+    )
+
+    assert all(
+        history[i + 1] <= history[i]
+        for i in range(len(history) - 1)
+    )
+
+
+def test_ga_with_zero_generations():
+    cities = [(0, 0), (2, 4), (5, 2)]
+
+    route, distance, history = run_genetic_algorithm(
+        cities, population_size=5, generations=0, seed=42
+    )
+
+    assert validate_chromosome(route, 3)
+    assert distance == pytest.approx(history[0])
+    assert len(history) == 1
+
+
+def test_ga_with_single_city():
+    route, distance, history = run_genetic_algorithm(
+        [(5, 5)], population_size=3, generations=5, seed=42
+    )
+
+    assert route == [0]
+    assert distance == 0.0
+    assert history == [0.0] * 6
+
+
+def test_ga_rejects_empty_cities():
+    with pytest.raises(ValueError):
+        run_genetic_algorithm([])
+
+
+def test_ga_rejects_invalid_population_size():
+    with pytest.raises(ValueError):
+        run_genetic_algorithm(
+            [(0, 0), (1, 1)], population_size=0
+        )
+
+
+def test_ga_rejects_invalid_rates():
+    cities = [(0, 0), (1, 0), (1, 1)]
+
+    with pytest.raises(ValueError):
+        run_genetic_algorithm(cities, crossover_rate=1.5)
+
+    with pytest.raises(ValueError):
+        run_genetic_algorithm(cities, mutation_rate=-0.1)

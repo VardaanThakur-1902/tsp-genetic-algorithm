@@ -1,7 +1,7 @@
 
 import math
 import random
-
+from src.distance import build_distance_matrix
 
 Chromosome = list[int]
 
@@ -289,3 +289,123 @@ def select_elites(
         chromosome.copy()
         for chromosome in ranked_population[:elite_count]
     ]
+
+
+def run_genetic_algorithm(
+    cities: Sequence[tuple[float, float]],
+    population_size: int = 50,
+    generations: int = 100,
+    crossover_rate: float = 0.9,
+    mutation_rate: float = 0.1,
+    tournament_size: int = 3,
+    elite_count: int = 1,
+    seed: int | None = 42,
+) -> tuple[Chromosome, float, list[float]]:
+    """
+    Run the complete Genetic Algorithm for TSP.
+
+    Returns:
+        best_route: Best route found.
+        best_distance: Its total distance.
+        history: Best distance at initialization and after each generation.
+    """
+    if not cities:
+        raise ValueError("At least one city is required.")
+
+    if population_size < 1:
+        raise ValueError("Population size must be at least 1.")
+
+    if generations < 0:
+        raise ValueError("Generations cannot be negative.")
+
+    if not 0.0 <= crossover_rate <= 1.0:
+        raise ValueError("Crossover rate must be between 0 and 1.")
+
+    if not 0.0 <= mutation_rate <= 1.0:
+        raise ValueError("Mutation rate must be between 0 and 1.")
+
+    if not 1 <= elite_count <= population_size:
+        raise ValueError("Invalid elite count.")
+
+    if not 1 <= tournament_size <= population_size:
+        raise ValueError("Invalid tournament size.")
+
+    rng = random.Random(seed)
+    distance_matrix = build_distance_matrix(cities)
+
+    population = initialize_population(
+        number_of_cities=len(cities),
+        population_size=population_size,
+        seed=rng.randrange(0, 2**32),
+    )
+
+    def route_distance(route: Chromosome) -> float:
+        return evaluate_fitness(route, distance_matrix)
+
+    best_route = min(population, key=route_distance).copy()
+    best_distance = route_distance(best_route)
+
+    # Includes the best distance before evolution begins.
+    history = [best_distance]
+
+    for _ in range(generations):
+        # Copy the best individuals without crossover or mutation.
+        next_population = select_elites(
+            population,
+            distance_matrix,
+            elite_count=elite_count,
+        )
+
+        while len(next_population) < population_size:
+            parent1 = tournament_selection(
+                population,
+                distance_matrix,
+                tournament_size=tournament_size,
+                seed=rng.randrange(0, 2**32),
+            )
+
+            parent2 = tournament_selection(
+                population,
+                distance_matrix,
+                tournament_size=tournament_size,
+                seed=rng.randrange(0, 2**32),
+            )
+
+            if rng.random() < crossover_rate:
+                child1, child2 = ordered_crossover(
+                    parent1,
+                    parent2,
+                    seed=rng.randrange(0, 2**32),
+                )
+            else:
+                child1, child2 = parent1.copy(), parent2.copy()
+
+            child1 = swap_mutation(
+                child1,
+                mutation_rate=mutation_rate,
+                seed=rng.randrange(0, 2**32),
+            )
+
+            child2 = swap_mutation(
+                child2,
+                mutation_rate=mutation_rate,
+                seed=rng.randrange(0, 2**32),
+            )
+
+            next_population.append(child1)
+
+            if len(next_population) < population_size:
+                next_population.append(child2)
+
+        population = next_population
+
+        generation_best = min(population, key=route_distance)
+        generation_distance = route_distance(generation_best)
+
+        if generation_distance < best_distance:
+            best_route = generation_best.copy()
+            best_distance = generation_distance
+
+        history.append(best_distance)
+
+    return best_route, best_distance, history
