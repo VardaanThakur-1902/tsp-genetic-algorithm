@@ -10,6 +10,12 @@ from src.genetic_algorithm import (
 )
 from src.interactive_input import collect_problem_input
 
+from src.visualization import (
+    plot_dual_route,
+    plot_dual_convergence,
+    plot_solution_comparison,
+)
+
 
 def main():
     try:
@@ -72,6 +78,50 @@ def main():
 
     shortest_result = route_details(distance_route)
     cheapest_result = route_details(cost_route)
+
+    
+    # Save the shortest-distance route visualization.
+    plot_dual_route(
+        cities=cities,
+        labels=labels,
+        route=distance_route,
+        output_path="results/shortest_distance_route.png",
+        title="Shortest-Distance Route",
+        metric_label="Total distance",
+        metric_value=shortest_result["total_distance"],
+    )
+
+    # Save the minimum-cost route visualization.
+    plot_dual_route(
+        cities=cities,
+        labels=labels,
+        route=cost_route,
+        output_path="results/minimum_cost_route.png",
+        title="Minimum-Cost Route",
+        metric_label="Total cost",
+        metric_value=cheapest_result["total_cost"],
+    )
+
+    # Save both GA convergence histories.
+    plot_dual_convergence(
+        distance_history=distance_history,
+        cost_history=cost_history,
+        output_path="results/dual_convergence.png",
+    )
+
+    # Compare distance and cost for the selected tours.
+    plot_solution_comparison(
+        shortest_result=shortest_result,
+        cheapest_result=cheapest_result,
+        output_path="results/solution_comparison.png",
+    )
+
+    print("\nVisualization files saved:")
+    print(" - results/shortest_distance_route.png")
+    print(" - results/minimum_cost_route.png")
+    print(" - results/dual_convergence.png")
+    print(" - results/solution_comparison.png")
+
 
     print("\n" + "=" * 60)
     print("TRAVELLING SALESPERSON PROBLEM SOLVER")
