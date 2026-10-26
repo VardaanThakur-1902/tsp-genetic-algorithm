@@ -1,5 +1,11 @@
 
 from pathlib import Path
+
+import matplotlib
+
+# Use a non-interactive backend for reliable PNG generation.
+matplotlib.use("Agg")
+
 import matplotlib.pyplot as plt
 
 

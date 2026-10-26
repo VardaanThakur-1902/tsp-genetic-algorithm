@@ -409,3 +409,123 @@ def run_genetic_algorithm(
         history.append(best_distance)
 
     return best_route, best_distance, history
+
+
+def run_genetic_algorithm_for_matrix(
+    objective_matrix,
+    population_size=50,
+    generations=100,
+    crossover_rate=0.9,
+    mutation_rate=0.1,
+    tournament_size=3,
+    elite_count=1,
+    seed=42,
+):
+    """Find a low-cost tour using any square objective matrix.
+
+    The matrix can represent distances or travel costs.
+    Returns: best_route, best_objective_value, history.
+    """
+    if not objective_matrix:
+        raise ValueError("Objective matrix cannot be empty.")
+
+    number_of_cities = len(objective_matrix)
+
+    if any(len(row) != number_of_cities for row in objective_matrix):
+        raise ValueError("Objective matrix must be square.")
+
+    for row in objective_matrix:
+        for value in row:
+            if not math.isfinite(float(value)) or value < 0:
+                raise ValueError(
+                    "Matrix values must be finite and non-negative."
+                )
+
+    if population_size < 1:
+        raise ValueError("Population size must be at least 1.")
+    if generations < 0:
+        raise ValueError("Generations cannot be negative.")
+    if not 0 <= crossover_rate <= 1:
+        raise ValueError("Crossover rate must be between 0 and 1.")
+    if not 0 <= mutation_rate <= 1:
+        raise ValueError("Mutation rate must be between 0 and 1.")
+    if not 1 <= elite_count <= population_size:
+        raise ValueError("Elite count must be between 1 and population size.")
+    if not 1 <= tournament_size <= population_size:
+        raise ValueError(
+            "Tournament size must be between 1 and population size."
+        )
+
+    rng = random.Random(seed)
+
+    population = initialize_population(
+        number_of_cities=number_of_cities,
+        population_size=population_size,
+        seed=rng.randrange(0, 2**32),
+    )
+
+    def objective(route):
+        return evaluate_fitness(route, objective_matrix)
+
+    best_route = min(population, key=objective).copy()
+    best_value = objective(best_route)
+    history = [best_value]
+
+    for _ in range(generations):
+        next_population = select_elites(
+            population,
+            objective_matrix,
+            elite_count=elite_count,
+        )
+
+        while len(next_population) < population_size:
+            parent1 = tournament_selection(
+                population,
+                objective_matrix,
+                tournament_size=tournament_size,
+                seed=rng.randrange(0, 2**32),
+            )
+            parent2 = tournament_selection(
+                population,
+                objective_matrix,
+                tournament_size=tournament_size,
+                seed=rng.randrange(0, 2**32),
+            )
+
+            if rng.random() < crossover_rate:
+                child1, child2 = ordered_crossover(
+                    parent1,
+                    parent2,
+                    seed=rng.randrange(0, 2**32),
+                )
+            else:
+                child1, child2 = parent1.copy(), parent2.copy()
+
+            child1 = swap_mutation(
+                child1,
+                mutation_rate=mutation_rate,
+                seed=rng.randrange(0, 2**32),
+            )
+            child2 = swap_mutation(
+                child2,
+                mutation_rate=mutation_rate,
+                seed=rng.randrange(0, 2**32),
+            )
+
+            next_population.append(child1)
+
+            if len(next_population) < population_size:
+                next_population.append(child2)
+
+        population = next_population
+
+        generation_best = min(population, key=objective)
+        generation_value = objective(generation_best)
+
+        if generation_value < best_value:
+            best_route = generation_best.copy()
+            best_value = generation_value
+
+        history.append(best_value)
+
+    return best_route, best_value, history
