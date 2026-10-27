@@ -51,32 +51,18 @@ tsp-genetic-algorithm/
 │
 ├── src/
 │   ├── __init__.py
-│   ├── main.py
-│   ├── distance.py
-│   ├── baseline_solver.py
-│   ├── genetic_algorithm.py
-│   ├── exact_solver.py
-│   ├── evaluation.py
-│   ├── experiments.py
-│   ├── visualization.py
-│   ├── city_loader.py
-│   ├── result_exporter.py
+│   ├── interactive_solver.py
 │   ├── interactive_input.py
-│   └── interactive_solver.py
+│   ├── distance.py
+│   ├── genetic_algorithm.py
+│   └── visualization.py
 │
 ├── tests/
 │   ├── test_distance.py
-│   ├── test_visualization.py
-│   ├── test_experiments.py
-│   ├── test_evaluation.py
-│   ├── test_city_loader.py
-│   ├── test_result_exporter.py
-│   ├── test_cli.py
+│   ├── test_genetic_algorithm.py
 │   ├── test_interactive_input.py
-│   └── test_dual_optimization.py
-│
-├── data/
-│   └── cities.csv
+│   ├── test_dual_optimization.py
+│   └── test_dual_visualization.py
 │
 ├── results/
 │   ├── dual_optimization_results.json
@@ -85,9 +71,9 @@ tsp-genetic-algorithm/
 │   ├── dual_convergence.png
 │   └── solution_comparison.png
 │
-├── requirements.txt
 ├── .gitignore
-└── README.md
+├── README.md
+└── requirements.txt
 ```
 
 *Note: The files and generated results listed above reflect the intended project structure. Keep only files that actually exist in your repository; generated result files may appear after running the program.*
