@@ -103,13 +103,10 @@ tsp-genetic-algorithm/
 ### 1. Clone the repository
 
 ```bash
-git clone YOUR_GITHUB_REPOSITORY_URL
+git clone https://github.com/VardaanThakur-1902/tsp-genetic-algorithm.git
 cd tsp-genetic-algorithm
 ```
 
-Replace `YOUR_GITHUB_REPOSITORY_URL` with your actual repository URL.
-
-Alternatively, open your existing project folder directly in VS Code.
 
 ### 2. Create a virtual environment
 
@@ -428,11 +425,6 @@ This project demonstrates practical implementation of:
 - Algorithm visualization and convergence analysis.
 - Reproducible experiments and structured result exporting.
 
-## License
-
-Choose a license before distributing the project publicly. For example, you may use the MIT License by adding a `LICENSE` file containing its terms.
-
----
 
 **Project:** Travelling Salesperson Problem Solver Using Genetic Algorithm
 
