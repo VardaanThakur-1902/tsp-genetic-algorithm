@@ -116,12 +116,6 @@ def main():
         output_path="results/solution_comparison.png",
     )
 
-    print("\nVisualization files saved:")
-    print(" - results/shortest_distance_route.png")
-    print(" - results/minimum_cost_route.png")
-    print(" - results/dual_convergence.png")
-    print(" - results/solution_comparison.png")
-
 
     print("\n" + "=" * 60)
     print("TRAVELLING SALESPERSON PROBLEM SOLVER")
@@ -137,7 +131,6 @@ def main():
     print(" -> ".join(cheapest_result["route"]))
     print(f"Total distance: {cheapest_result['total_distance']:.3f}")
     print(f"Total travel cost: {cheapest_result['total_cost']:.2f}")
-    print(f"Runtime: {cost_runtime:.6f} seconds")
 
     results = {
         "cities": [
@@ -163,8 +156,6 @@ def main():
 
     with output_path.open("w", encoding="utf-8") as file:
         json.dump(results, file, indent=4)
-
-    print(f"\nResults saved to: {output_path}")
 
 
 if __name__ == "__main__":
